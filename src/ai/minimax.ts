@@ -104,7 +104,7 @@ async function search(
 
 export const MinimaxEngine: Engine = {
   id: 'minimax',
-  name: 'ミニマックス（強め）',
+  name: 'minimax（強）',
   isHuman: false,
   async selectMove(board: Board, player: Player, valid: Move[]): Promise<Move | null> {
     if (valid.length === 0) return null
