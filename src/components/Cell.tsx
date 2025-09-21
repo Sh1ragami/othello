@@ -7,10 +7,12 @@ type Props = {
   showHint: boolean
   disabled?: boolean
   onClick?: () => void
+  isLastBlack?: boolean
+  isLastWhite?: boolean
 }
 
-export default function Cell({ row, col, value, showHint, disabled, onClick }: Props) {
-  const className = ['cell', disabled ? 'disabled' : '', showHint ? 'hint' : '']
+export default function Cell({ row, col, value, showHint, disabled, onClick, isLastBlack, isLastWhite }: Props) {
+  const className = ['cell', disabled ? 'disabled' : '', showHint ? 'hint' : '', isLastBlack ? 'last-black' : '', isLastWhite ? 'last-white' : '']
     .filter(Boolean)
     .join(' ')
 

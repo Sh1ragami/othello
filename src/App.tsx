@@ -9,6 +9,7 @@ import type { Board, GameStatus, Move, Player, LogEntry } from '@game/types'
 import { createInitialBoard, getValidMoves, applyMove, opposite, countDiscs, isGameOver, hasAnyValidMoves } from '@game/logic'
 import { evaluateBoard } from '@game/eval'
 import { evalToProbability } from '@game/eval'
+import { playFlips } from './sfx/sound'
 
 type EngineSelection = {
   B: string
@@ -91,6 +92,8 @@ function useOthello() {
         const evalAfter = evaluateBoard(nextBoard)
         const delta = evalAfter - evalBefore
         const notation = `${String.fromCharCode(65 + move.col)}${move.row + 1}`
+        // Play flip SFX: placed disc + flipped discs
+        playFlips(1 + move.flips.length)
         const newLogEntry: LogEntry = {
           n: baseLog.length + 1,
           player: current.turn,
@@ -206,27 +209,35 @@ export default function App() {
     cursor, lastIndex, first, prev, next, last, autoplay, setAutoplay, boardRef, boardHeight, lowerRef, lowerHeight, upperRef, upperHeight, atEnd
   } = useOthello()
 
-  // Trigger AI move if current player is AI
+  // Trigger AI move if current player is AI (with a small delay for UX)
   React.useEffect(() => {
     if (status.type === 'gameover') return
     if (!atEnd) return // disable AI while replaying
     const engineId = engines[turn]
     const engine = getEngine(engineId)
     if (!engine || engine.isHuman) return
-    if (validMoves.length === 0) {
-      // auto-pass
-      step(null)
-      return
-    }
+
+    const aiDelayMs = 500
     let cancelled = false
+    let timer: number | undefined
+
     ;(async () => {
+      if (validMoves.length === 0) {
+        // AIのパスは即時処理（人間ターンへの復帰を待たせない）
+        if (!cancelled) step(null)
+        return
+      }
       const move = await engine.selectMove(board, turn, validMoves)
-      if (!cancelled) step(move)
+      timer = window.setTimeout(() => {
+        if (!cancelled) step(move)
+      }, aiDelayMs)
     })()
+
     return () => {
       cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
     }
-  }, [board, turn, engines, status, validMoves, step])
+  }, [board, turn, engines, status, validMoves, step, atEnd])
 
   const isHumanTurn = React.useMemo(() => {
     const engine = getEngine(engines[turn])
@@ -254,6 +265,21 @@ export default function App() {
     }
     return evalToProbability(currentEval)
   }, [currentEval, status])
+
+  const lastEntry = React.useMemo(() => {
+    for (let i = log.length - 1; i >= 0; i--) {
+      const e = log[i]
+      if (e.move) return e
+    }
+    return null
+  }, [log])
+
+  const lastBlack = lastEntry && lastEntry.player === 'B' && lastEntry.move
+    ? { row: lastEntry.move.row, col: lastEntry.move.col }
+    : null
+  const lastWhite = lastEntry && lastEntry.player === 'W' && lastEntry.move
+    ? { row: lastEntry.move.row, col: lastEntry.move.col }
+    : null
 
   return (
     <div className="app">
@@ -306,6 +332,8 @@ export default function App() {
             interactive={isHumanTurn && status.type !== 'gameover' && atEnd}
             onPlay={(m) => step(m)}
             boardRef={boardRef}
+            lastBlack={lastBlack}
+            lastWhite={lastWhite}
           />
           <TimelineControls
             cursor={cursor}

@@ -77,6 +77,22 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubunt
 .disc.black { background: var(--black); border-color: rgba(255,255,255,0.25); }
 .disc.white { background: var(--white); border-color: rgba(0,0,0,0.3); }
 
+/* Highlight last move: red dot at center */
+.cell.last-black .disc::after,
+.cell.last-white .disc::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 22%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(220, 40, 40, 0.9);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset, 0 0 6px rgba(220,40,40,0.5);
+  pointer-events: none;
+}
+
 .hint::after { content: ""; position: absolute; left: 50%; top: 50%; width: 18%; height: 18%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(255,255,255,0.6); box-shadow: 0 0 0 1px rgba(0,0,0,0.25) inset; }
 
 .toolbar { display: flex; gap: var(--s-3); flex-wrap: wrap; }
